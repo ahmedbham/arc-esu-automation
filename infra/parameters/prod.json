@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "automationAccountName": {
+      "value": "aa-arc-esu-prod"
+    },
+    "emailReceivers": {
+      "value": [
+        {
+          "name": "OpsTeam",
+          "emailAddress": "ops-team@example.com"
+        }
+      ]
+    },
+    "tags": {
+      "value": {
+        "environment": "prod",
+        "project": "arc-esu-automation"
+      }
+    }
+  }
+}

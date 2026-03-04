@@ -1,0 +1,375 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.41.2.15936",
+      "templateHash": "365686606413398213"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for all resources."
+      }
+    },
+    "automationAccountName": {
+      "type": "string",
+      "defaultValue": "aa-arc-esu",
+      "minLength": 6,
+      "maxLength": 50,
+      "metadata": {
+        "description": "Name of the Automation Account."
+      }
+    },
+    "emailReceivers": {
+      "type": "array",
+      "metadata": {
+        "description": "Email receivers for alert notifications."
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Tags to apply to all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-automation-account",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[parameters('automationAccountName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "9518832732389844128"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string",
+              "minLength": 6,
+              "maxLength": 50,
+              "metadata": {
+                "description": "Name of the Automation Account."
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for the Automation Account."
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Resource tags."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Automation/automationAccounts",
+              "apiVersion": "2023-11-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "sku": {
+                  "name": "Basic"
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "id": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Automation Account."
+              },
+              "value": "[resourceId('Microsoft.Automation/automationAccounts', parameters('name'))]"
+            },
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Automation Account."
+              },
+              "value": "[parameters('name')]"
+            },
+            "principalId": {
+              "type": "string",
+              "metadata": {
+                "description": "Principal ID of the system-assigned managed identity."
+              },
+              "value": "[reference(resourceId('Microsoft.Automation/automationAccounts', parameters('name')), '2023-11-01', 'full').identity.principalId]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-action-group",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "ag-arc-esu-alerts"
+          },
+          "shortName": {
+            "value": "ArcESUAlert"
+          },
+          "emailReceivers": {
+            "value": "[parameters('emailReceivers')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "1523558785442124161"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "metadata": {
+                "description": "Name of the Action Group."
+              }
+            },
+            "shortName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 12,
+              "metadata": {
+                "description": "Short name for the Action Group (max 12 characters)."
+              }
+            },
+            "emailReceivers": {
+              "type": "array",
+              "metadata": {
+                "description": "List of email receivers for the Action Group."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Insights/actionGroups",
+              "apiVersion": "2023-01-01",
+              "name": "[parameters('name')]",
+              "location": "global",
+              "properties": {
+                "copy": [
+                  {
+                    "name": "emailReceivers",
+                    "count": "[length(parameters('emailReceivers'))]",
+                    "input": {
+                      "name": "[parameters('emailReceivers')[copyIndex('emailReceivers')].name]",
+                      "emailAddress": "[parameters('emailReceivers')[copyIndex('emailReceivers')].emailAddress]",
+                      "useCommonAlertSchema": true
+                    }
+                  }
+                ],
+                "groupShortName": "[parameters('shortName')]",
+                "enabled": true
+              }
+            }
+          ],
+          "outputs": {
+            "id": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Action Group."
+              },
+              "value": "[resourceId('Microsoft.Insights/actionGroups', parameters('name'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-monitor-alerts",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "automationAccountId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy-automation-account'), '2025-04-01').outputs.id.value]"
+          },
+          "actionGroupId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy-action-group'), '2025-04-01').outputs.id.value]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "16232759241565423923"
+            }
+          },
+          "parameters": {
+            "automationAccountId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Automation Account to monitor."
+              }
+            },
+            "actionGroupId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Action Group for alert notifications."
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for the alert rules."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2023-03-15-preview",
+              "name": "ESU Compliance Gap Alert",
+              "location": "[parameters('location')]",
+              "properties": {
+                "displayName": "ESU Compliance Gap Alert",
+                "description": "Fires when ESU compliance gaps are detected in Arc-enabled server assessments.",
+                "severity": 2,
+                "enabled": true,
+                "evaluationFrequency": "PT1H",
+                "windowSize": "PT1H",
+                "scopes": [
+                  "[parameters('automationAccountId')]"
+                ],
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "            AzureDiagnostics\r\n            | where ResourceProvider == \"MICROSOFT.AUTOMATION\"\r\n            | where Category == \"JobStreams\"\r\n            | where StreamType_s == \"Output\"\r\n            | where ResultDescription has \"ComplianceGap\"\r\n            | summarize GapCount = count() by bin(TimeGenerated, 1h)\r\n            | where GapCount > 0\r\n          ",
+                      "timeAggregation": "Count",
+                      "operator": "GreaterThan",
+                      "threshold": 0,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 1,
+                        "minFailingPeriodsToAlert": 1
+                      }
+                    }
+                  ]
+                },
+                "actions": {
+                  "actionGroups": [
+                    "[parameters('actionGroupId')]"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/activityLogAlerts",
+              "apiVersion": "2020-10-01",
+              "name": "Runbook Failure Alert",
+              "location": "global",
+              "properties": {
+                "description": "Fires when any Automation runbook job fails.",
+                "enabled": true,
+                "scopes": [
+                  "[parameters('automationAccountId')]"
+                ],
+                "condition": {
+                  "allOf": [
+                    {
+                      "field": "category",
+                      "equals": "Administrative"
+                    },
+                    {
+                      "field": "resourceType",
+                      "equals": "Microsoft.Automation/automationAccounts/jobs"
+                    },
+                    {
+                      "field": "status",
+                      "equals": "Failed"
+                    }
+                  ]
+                },
+                "actions": {
+                  "actionGroups": [
+                    {
+                      "actionGroupId": "[parameters('actionGroupId')]"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'deploy-action-group')]",
+        "[resourceId('Microsoft.Resources/deployments', 'deploy-automation-account')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "automationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the deployed Automation Account."
+      },
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy-automation-account'), '2025-04-01').outputs.name.value]"
+    },
+    "automationAccountPrincipalId": {
+      "type": "string",
+      "metadata": {
+        "description": "Principal ID of the Automation Account managed identity."
+      },
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deploy-automation-account'), '2025-04-01').outputs.principalId.value]"
+    }
+  }
+}
