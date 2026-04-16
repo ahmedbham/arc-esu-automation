@@ -9,7 +9,16 @@ This solution automates the full lifecycle of [Extended Security Updates (ESU)](
 ## 2. Architecture Diagram
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryBorderColor': '#1d4ed8', 'primaryTextColor': '#1e3a5f', 'lineColor': '#64748b', 'edgeLabelBackground': '#f8fafc'}}}%%
 flowchart TD
+    classDef automation fill:#dbeafe,stroke:#1d4ed8,color:#1e3a5f
+    classDef identity fill:#bfdbfe,stroke:#1d4ed8,color:#1e3a5f
+    classDef arcNode fill:#dcfce7,stroke:#15803d,color:#14532d
+    classDef licenseNode fill:#ffedd5,stroke:#c2410c,color:#7c2d12
+    classDef obsNode fill:#ede9fe,stroke:#6d28d9,color:#3b0764
+    classDef argNode fill:#ccfbf1,stroke:#0f766e,color:#134e4a
+    classDef emailNode fill:#fef9c3,stroke:#a16207,color:#713f12
+
     subgraph AA["Azure Automation Account"]
         MI{{System-Assigned Managed Identity}}
         MOD[EsuHelpers.psm1]
@@ -60,6 +69,19 @@ flowchart TD
     ALERT2 --> AG
     AG -->|email| EMAIL["📧 Notification Recipients"]
     R4 -->|"Write-Error<br/>ESU_COMPLIANCE_ALERT"| LAW
+
+    class MI identity
+    class MOD,R1,R2,R3,R4 automation
+    class M1,M2,M3,M4 arcNode
+    class L1,L2 licenseNode
+    class LAW,ALERT1,ALERT2,AG obsNode
+    class ARG argNode
+    class EMAIL emailNode
+
+    style AA fill:#eff6ff,stroke:#1d4ed8,color:#1e3a5f
+    style ARC fill:#f0fdf4,stroke:#15803d,color:#14532d
+    style LIC fill:#fff7ed,stroke:#c2410c,color:#7c2d12
+    style OBS fill:#f5f3ff,stroke:#6d28d9,color:#3b0764
 ```
 
 ---
